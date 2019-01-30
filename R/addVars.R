@@ -4,9 +4,10 @@
 #'
 #' @param match list structure with possibly matched observations 
 #' @param data  list of data frames
-#' @param ... names of variables, one for each data frame
+#' @param ... named list of variables (one for each data frame)
 #'
 #' @return list structure with possibly matched observations with added variables
+#' @importFrom sjlabelled as_character 
 #' @export
 #'
 #' @examples
@@ -18,19 +19,27 @@
 #' x2$points <- findInterval(rnorm(n2, mean=10, sd=3), 0:15)-1
 #' #
 #' match <- findMatch(list(x1,x2), c('code', 'code'))
-#' match <- addVars(match, list(x1,x2), c('birthday', 'birthday'))
+#' match <- addVars(match, list(x1,x2), birthday=c('birthday', 'birthday'))
 #' head(match)
 #' summary(match)
 addVars <- function(match, data, ...) {
-  #browser()
   args  <- list(...)
   nargs <- names(args)
   for (i in 1:length(args)) {
     nelem <- nargs[i]
     if (is.null(nargs) || (nchar(nelem)==0)) nelem <- args[[i]][1]
     if (nelem %in% names(match)) stop('duplicate element names are not allowed')
-    match[[nelem]] <- data[[1]][match$line[,1],args[[i]][1]]
-    for (j in 2:length(data)) match[[nelem]] <- cbind(match[[nelem]], data[[j]][match$line[,j],args[[i]][j]])
+    vname <- args[[i]][1]
+    if (!existsVars(vname, data[[1]])) stop(sprintf("variable '%s' does not exist in data sets", vname))
+    v <- as_character(data[[1]][,vname])
+    match[[nelem]] <- v[match$line[,1]]
+    for (j in 2:length(data)) {
+      vname <- args[[i]][j]
+      if (!existsVars(vname, data[[j]])) stop(sprintf("variable '%s' does not exist in data sets", vname))
+      v <- as_character(data[[j]][,vname])
+      match[[nelem]] <- cbind(match[[nelem]], v[match$line[,j]])
+    }
+    colnames(match[[nelem]]) <- sprintf('%.0f.%s', 1:length(data), args[[i]])
   }
   match
 } 

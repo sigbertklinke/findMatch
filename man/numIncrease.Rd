@@ -4,21 +4,19 @@
 \alias{numIncrease}
 \title{numIncrease}
 \usage{
-numIncrease(match, data, vars, name = NULL, min = rep(0, length(data)),
-  max = 0:(length(data) - 1))
+numIncrease(match, data, min = rep(0, length(data)),
+  max = 0:(length(data) - 1), ...)
 }
 \arguments{
 \item{match}{match structure}
 
 \item{data}{list of data frames}
 
-\item{vars}{vector of variables. One for each data frame.}
-
-\item{name}{list element name to store original variables}
-
 \item{min}{minimal in/decrease, defaults to \code{rep(0, length(data))}}
 
 \item{max}{maximal in/decrease, defaults to \code{0:(length(data)-1)}}
+
+\item{...}{named list of variables (one for each data frame)}
 }
 \value{
 updated match structure
@@ -39,13 +37,13 @@ x2$age <- as.numeric(trunc(difftime(today+365, x2$birthday, unit="days")/365))
 #
 match <- findMatch(list(x1,x2), c('code', 'code'))
 summary(match)
-match <- numIncrease(match, list(x1,x2), c('age', 'age'), 'age')
+match <- numIncrease(match, list(x1,x2), age=c('age', 'age'))
 summary(match)
 head(match)
 \dontrun{
 # with \%>\% operator
 library('magrittr')
 match <- findMatch(list(x1,x2), c('code', 'code')) \%>\%
-         numIncrease(list(x1,x2), c('age', 'age'), 'age')
+         numIncrease(list(x1,x2), age=c('age', 'age'), 'age')
 }
 }

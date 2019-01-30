@@ -8,7 +8,7 @@
 findMatch(data, ...)
 
 \method{findMatch}{default}(data, vars, dmax = 3, exclude = c("", "."),
-  ignore.case = FALSE, ...)
+  ignore.case = FALSE, unique.id = NULL, output = 50, ...)
 }
 \arguments{
 \item{data}{list of data frames}
@@ -22,6 +22,10 @@ findMatch(data, ...)
 \item{exclude}{entries to be excluded from the unique values, defaults to \code{c('', '.')}}
 
 \item{ignore.case}{if FALSE, the uniques values are case sensitive and if TRUE, case is ignored}
+
+\item{unique.id}{vector of variables which contain a unique ID over all data sets. If not given then \code{filename:lineno} will be used.}
+
+\item{output}{number of observation to analyse before a progress information is displayed}
 }
 \value{
 a list structure with possibly matched observations

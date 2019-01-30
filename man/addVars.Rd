@@ -11,7 +11,7 @@ addVars(match, data, ...)
 
 \item{data}{list of data frames}
 
-\item{...}{names of variables, one for each data frame}
+\item{...}{named list of variables (one for each data frame)}
 }
 \value{
 list structure with possibly matched observations with added variables
@@ -28,7 +28,7 @@ x1$points <- findInterval(rnorm(n1, mean=10, sd=3), 0:15)-1
 x2$points <- findInterval(rnorm(n2, mean=10, sd=3), 0:15)-1
 #
 match <- findMatch(list(x1,x2), c('code', 'code'))
-match <- addVars(match, list(x1,x2), c('birthday', 'birthday'))
+match <- addVars(match, list(x1,x2), birthday=c('birthday', 'birthday'))
 head(match)
 summary(match)
 }

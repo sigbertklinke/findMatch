@@ -4,16 +4,17 @@
 \alias{allIdentical}
 \title{allIdentical}
 \usage{
-allIdentical(match, data, vars, name = NULL)
+allIdentical(match, data, ...)
 }
 \arguments{
 \item{match}{match structure}
 
 \item{data}{list of data frames}
 
-\item{vars}{vector of variables. One for each data frame.}
-
-\item{name}{list element name to store original variables}
+\item{...}{named list of variables (one for each data frame)}
+}
+\value{
+returns a modified match
 }
 \description{
 Increases each Levenshtein distances by one if variable entries do not match
@@ -28,12 +29,12 @@ x2$points <- findInterval(rnorm(n2, mean=10, sd=3), 0:15)-1
 #
 match <- findMatch(list(x1,x2), c('code', 'code'))
 summary(match)
-match <- allIdentical(match, list(x1,x2), c('sex', 'sex'), 'sex')
+match <- allIdentical(match, list(x1,x2), sex=c('sex', 'sex'))
 summary(match)
 \dontrun{
 # with \%>\% operator
 library('magrittr')
 match <- findMatch(list(x1,x2), c('code', 'code')) \%>\%
-         allIdentical(list(x1,x2), c('sex', 'sex'), 'sex')
+         allIdentical(list(x1,x2), sex=c('sex', 'sex'))
 }
 }

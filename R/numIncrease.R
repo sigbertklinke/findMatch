@@ -5,10 +5,9 @@
 #'
 #' @param match match structure
 #' @param data  list of data frames
-#' @param vars vector of variables. One for each data frame.
-#' @param name list element name to store original variables
 #' @param min minimal in/decrease, defaults to \code{rep(0, length(data))}
 #' @param max maximal in/decrease, defaults to \code{0:(length(data)-1)}
+#' @param ... named list of variables (one for each data frame)
 #'
 #' @return updated match structure
 #' @export
@@ -25,37 +24,45 @@
 #' #
 #' match <- findMatch(list(x1,x2), c('code', 'code'))
 #' summary(match)
-#' match <- numIncrease(match, list(x1,x2), c('age', 'age'), 'age')
+#' match <- numIncrease(match, list(x1,x2), age=c('age', 'age'))
 #' summary(match)
 #' head(match)
 #' \dontrun{
 #' # with %>% operator
 #' library('magrittr')
 #' match <- findMatch(list(x1,x2), c('code', 'code')) %>%
-#'          numIncrease(list(x1,x2), c('age', 'age'), 'age')
+#'          numIncrease(list(x1,x2), age=c('age', 'age'), 'age')
 #' }
-numIncrease <- function (match, data, vars, name=NULL, min=rep(0, length(data)), max=0:(length(data)-1)) {
+numIncrease <- function (match, data, min=rep(0, length(data)), max=0:(length(data)-1), ...) {
   if (any(min>max)) stop ("It must hold for all entries: min<=max")
+  args  <- list(...)
+  nargs <- names(args)
   res   <- match
-  dvars <- matrix(data[[1]][match$line[,1],vars[1]], ncol=1)
-  for (i in 2:length(vars)) dvars <- cbind(dvars, data[[i]][match$line[,i], vars[i]])
-  d <- apply(dvars, 1, function(v) {
-    p   <- which(!is.na(v))
-    if (length(p)<2) return(0) # NA matches always
-    mm <- c(v[p[1]]-max[p[1]], v[p[1]]-min[p[1]])
-    for (j in 2:length(p)) {
-      cmp <- v[p[j]]-max[p[j]]
-      if (mm[1]<cmp) mm[1] <- cmp
-      cmp <- v[p[j]]-min[p[j]]
-      if (mm[2]>cmp) mm[2] <- cmp
+  for (i in 1:length(args)) {
+    vname <- args[[i]][1]
+    if (!existsVars(vname, data[[1]])) stop(sprintf("variable '%s' does not exist in data sets", vname))  
+    dvars <- matrix(data[[1]][match$line[,1],vname], ncol=1)
+    for (j in 2:length(data)) {
+      vname <- args[[i]][j]
+      if (!existsVars(vname, data[[j]])) stop(sprintf("variable '%s' does not exist in data sets", vname))  
+      dvars <- cbind(dvars, data[[j]][match$line[,j], vname])
     }
-    return(mm[1]>mm[2])
-  })
-  res$leven <- match$leven + d
-  if (!is.null(name)) {
-    args <- list(match=res, data=data)
-    args$name <- vars
-    res <- do.call('addVars', args)
+    d <- apply(dvars, 1, function(v) {
+      p <- which(!is.na(v))
+      if (length(p)<2) return(0) # NA matches always
+      mm <- c(v[p[1]]-max[p[1]], v[p[1]]-min[p[1]])
+      for (k in 2:length(p)) {
+        cmp <- v[p[k]]-max[p[k]]
+        if (mm[1]<cmp) mm[1] <- cmp
+        cmp <- v[p[k]]-min[p[k]]
+        if (mm[2]>cmp) mm[2] <- cmp
+      }
+      return(mm[1]>mm[2])
+    })
+    res$leven <- match$leven + d
+    argsi             <- list(match=res, data=data)
+    argsi[[nargs[i]]] <- args[[i]]
+    res <- do.call('addVars', argsi)
   }
   res
 }

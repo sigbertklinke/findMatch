@@ -4,10 +4,9 @@
 #'
 #' @param match match structure
 #' @param data  list of data frames
-#' @param vars vector of variables. One for each data frame.
-#' @param name list element name to store original variables
+#' @param ... named list of variables (one for each data frame)
 #'
-#' @return
+#' @return returns a modified match 
 #' @export
 #'
 #' @examples
@@ -20,28 +19,35 @@
 #' #
 #' match <- findMatch(list(x1,x2), c('code', 'code'))
 #' summary(match)
-#' match <- allIdentical(match, list(x1,x2), c('sex', 'sex'), 'sex')
+#' match <- allIdentical(match, list(x1,x2), sex=c('sex', 'sex'))
 #' summary(match)
 #' \dontrun{
 #' # with %>% operator
 #' library('magrittr')
 #' match <- findMatch(list(x1,x2), c('code', 'code')) %>%
-#'          allIdentical(list(x1,x2), c('sex', 'sex'), 'sex')
+#'          allIdentical(list(x1,x2), sex=c('sex', 'sex'))
 #' }
-allIdentical <- function(match, data, vars, name=NULL) {
+allIdentical <- function(match, data, ...) {#
+  #browser()
+  args  <- list(...)
+  nargs <- names(args)
   res   <- match
-  dvar1 <- data[[1]][match$line[,1],vars[1]]
-  dvars <- matrix(if (is.factor(dvar1)) as.character(dvar1) else dvar1, ncol=1)
-  for (i in 2:length(vars)) {
-    dvari <- data[[i]][match$line[,i],vars[i]]
-    dvars <- cbind(dvars, if (is.factor(dvar1)) as.character(dvari) else dvari)
-  }
-  d <- apply(dvars, 1, function(v) { length(unique(v))-1 })
-  res$leven <- match$leven + d
-  if (!is.null(name)) {
-    args <- list(match=res, data=data)
-    args$name <- vars
-    res <- do.call('addVars', args)
+  for (i in 1:length(args)) {
+    vname <- args[[i]][1]
+    if (!existsVars(vname, data[[1]])) stop(sprintf("variable '%s' does not exist in data sets", vname))   
+    dvar1 <- data[[1]][match$line[,1],vname]
+    dvars <- matrix(if (is.factor(dvar1)) as.character(dvar1) else dvar1, ncol=1)
+    for (j in 2:length(data)) {
+      vname <- args[[i]][j]
+      if (!existsVars(vname, data[[j]])) stop(sprintf("variable '%s' does not exist in data sets", vname))   
+      dvari <- data[[j]][match$line[,j],vname]
+      dvars <- cbind(dvars, if (is.factor(dvar1)) as.character(dvari) else dvari)
+    }
+    d <- apply(dvars, 1, function(v) { length(unique(v))-1 })
+    res$leven <- match$leven + d
+    argsi             <- list(match=res, data=data)
+    argsi[[nargs[i]]] <- args[[i]]
+    res <- do.call('addVars', argsi)
   }
   res
 }

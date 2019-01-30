@@ -25,43 +25,45 @@
 #' data <- makeMerge(list(x1, x2), 'match.xlsx')
 #' }
 makeMerge <- function(data, files, full=FALSE, duplicates.ok=FALSE, ...) {
+  browser()
   size <- length(data)
 #  if (is.null(header)) header <- sprintf("_%.0f", 1:size)
-  for (i in 1:size) {
+  file <- c() 
+  line <- matrix(NA, nrow=0, ncol=size)
+  for (i in seq(files)) {
     cat (sprintf("Reading %s\n", files[i]))
     filei <- rio::import(files[i], ...)
     linei <- as.matrix(filei[,1:size])
-    # delete dups
-    linei <- linei[!duplicated(linei),]
-    # check uniqueness
-    dups <- matrix(FALSE, nrow=nrow(linei), ncol=size)
-    for (j in 1:size) dups[,j] <- duplicated(linei[,j])
+    line  <- rbind(line, linei)
+    file  <- c(file, paste0(files[i], ':', 1:nrow(linei)))
+  }
+  # delete "perfect" duplicates
+  dups <- duplicated(line)
+  if (sum(dups)) {
+    line <- line[!dups]
+    file <- file[!dups]
+  }
+  # check for "imperfect" duplicates
+  if (!duplicates.ok) {
+    dups  <- rep(FALSE, nrow(line))
+    for (j in 1:size) dups <- dups | duplicated(line[,j]) | duplicated(line[,j], fromLast = TRUE)
     if (any(dups)) {
-      cat("Duplicate matches\n")
+      line <- line[dups,]
+      file <- file[dups]
+      order <- c()
       for (j in 1:size) {
-        cat(j, ":", paste(linei[dups[,j],j]), "\n")
+        dupj  <- duplicated(line[,j]) | duplicated(line[,j], fromLast = TRUE)
+        val   <- sort(unique(line[dupj,j]))
+        for (k in val) order <- c(order, which(line[,j]==k))    
       }
-      if (!duplicates.ok) stop("Duplicates found")
-    }
-    if (i>1){
-      line <- rbind(line, linei)
-    } else {
-      line <- linei
-    }
-    # delete dups
-    line <- line[!duplicated(line),]
-    # check uniqueness
-    dups <- matrix(FALSE, nrow=nrow(line), ncol=size)
-    for (j in 1:size) dups[,j] <- duplicated(line[,j])
-    if (any(dups)) {
-      cat("Duplicate matches\n")
-      for (j in 1:size) {
-        cat(' ', i, ':', paste(line[dups[,j],j], collapse=','), "\n")
-      }
-      if (!duplicates.ok) stop("Duplicates found")
+      df      <- as.data.frame(line[order,])
+      df$file <- file[order]
+      print(df)
+      stop("Duplicates found")
     }
   }
   #
+  line <- apply(line, 1:2, as.numeric)
   if (full) {
     for (i in 1:size) {
       linei <- setdiff(1:nrow(data[[i]]), line[,i])
