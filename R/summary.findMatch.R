@@ -20,7 +20,13 @@
 #' head(match)
 #' summary(match)
 summary.findMatch <- function (object, ...) {
-  cat(sprintf("%0.f matches\n", nrow(object$idn)))
-  if (nrow(object$idn)) 
-    print(table(split(object$leven, c(col(object$leven, as.factor = TRUE)))))
+  if (is.null(object$idn)) {
+    t <- apply(object$line, 1, function(v) { t <- as.character(1:length(v)); paste0(t[!is.na(v)], collapse='-') }  )
+    cat(sprintf("%0.f matches\n", nrow(object$line)))
+    print(table(t))
+  } else {
+    cat(sprintf("%0.f matches\n", nrow(object$idn)))
+    if (nrow(object$idn)) 
+      print(table(split(object$leven, c(col(object$leven, as.factor = TRUE)))))
+  }
 }

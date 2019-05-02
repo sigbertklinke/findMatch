@@ -40,11 +40,12 @@ makeMerge <- function(data, files, full=FALSE, duplicates.ok=FALSE, ...) {
   # delete "perfect" duplicates
   dups <- duplicated(line)
   if (sum(dups)) {
-    line <- line[!dups]
+    line <- line[!dups,]
     file <- file[!dups]
   }
   # check for "imperfect" duplicates
   if (!duplicates.ok) {
+    browser()
     dups  <- rep(FALSE, nrow(line))
     for (j in 1:size) dups <- dups | duplicated(line[,j]) | duplicated(line[,j], fromLast = TRUE)
     if (any(dups)) {

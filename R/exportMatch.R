@@ -22,6 +22,6 @@
 #' match <- findMatch(list(x1,x2), c('code', 'code'))
 #' exportMatch(match, 'match.xlsx', overwrite=TRUE)
 exportMatch <- function (match, file, ...) {
-  match$leven <- cbind(match$leven, rowSums(match$leven))
+  if (!is.null(match[['leven']])) match$leven <- cbind(match$leven, rowSums(match$leven))
   export(as.data.frame(match), file, ...)
 }

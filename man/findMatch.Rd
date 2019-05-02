@@ -8,12 +8,13 @@
 findMatch(data, ...)
 
 \method{findMatch}{default}(data, vars, dmax = 3, exclude = c("", "."),
-  ignore.case = FALSE, unique.id = NULL, output = 50, ...)
+  ignore.case = FALSE, unique.id = NULL, output = 50,
+  cmpfunc = NULL, ...)
 }
 \arguments{
 \item{data}{list of data frames}
 
-\item{...}{further parameters}
+\item{...}{further parameters for cmp}
 
 \item{vars}{vector of variables. One for each data frame.}
 
@@ -26,6 +27,8 @@ findMatch(data, ...)
 \item{unique.id}{vector of variables which contain a unique ID over all data sets. If not given then \code{filename:lineno} will be used.}
 
 \item{output}{number of observation to analyse before a progress information is displayed}
+
+\item{cmpfunc}{function for comparison of strings of form \code{fun(x, y, ignore.case, ...)} (default: \code{\link[utils]{adist}})}
 }
 \value{
 a list structure with possibly matched observations

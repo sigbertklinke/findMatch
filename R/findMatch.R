@@ -1,4 +1,3 @@
-
 #' findMatch
 #'
 #' Finds matches between two or more data sets based on a text variable (code or e-mail) based on
@@ -12,7 +11,6 @@
 #' }
 #'
 #' @param data  list of data frames
-#' @param ...  further parameters
 #'
 #' @return a list structure with possibly matched observations
 #' @export
@@ -24,6 +22,8 @@ findMatch <- function(data, ...) { UseMethod("findMatch") }
 #' @param ignore.case if FALSE, the uniques values are case sensitive and if TRUE, case is ignored
 #' @param unique.id vector of variables which contain a unique ID over all data sets. If not given then \code{filename:lineno} will be used.
 #' @param output number of observation to analyse before a progress information is displayed
+#' @param cmpfunc function for comparison of strings of form \code{fun(x, y, ignore.case, ...)} (default: \code{\link[utils]{adist}})
+#' @param ... further parameters for cmp
 #'
 #' @rdname findMatch
 #' @return a list structure with possibly matched observations
@@ -41,7 +41,7 @@ findMatch <- function(data, ...) { UseMethod("findMatch") }
 #' match <- findMatch(list(x1,x2), c('code', 'code'))
 #' head(match)
 #' summary(match)
-findMatch.default <- function (data, vars, dmax=3, exclude=c("", "."), ignore.case=FALSE, unique.id=NULL, output=50, ...) {
+findMatch.default <- function (data, vars, dmax=3, exclude=c("", "."), ignore.case=FALSE, unique.id=NULL, output=50, cmpfunc=NULL, ...) {
   dups <- is.data.frame(data)
   if (dups) {
     idn  <- data[[vars]]
@@ -70,9 +70,10 @@ findMatch.default <- function (data, vars, dmax=3, exclude=c("", "."), ignore.ca
       uid[[i]] <- trim(data[[i]][,vname])
     }
   }
-  #browser()
   if (anyDuplicated(unlist(uid))) warning("Unique ID contain duplicates")
   if (output<1) output <- length(idn)+1
+  cmpargs <- list(...)
+  cmpargs$ignore.case <- ignore.case
   for (j in seq(length(idn))) {
     #browser()
     if ((j%%output)==0)
@@ -81,8 +82,10 @@ findMatch.default <- function (data, vars, dmax=3, exclude=c("", "."), ignore.ca
     d        <- rep(0, length(data))
     anymatch <- TRUE
     for (i in seq(length(data))) {
-      di   <- adist(zdv[[i]], idn[j], ignore.case=ignore.case)
-      d[i] <- min(di)
+      cmpargs$x <- ifelse(zdv[[i]] %in% exclude, NA, zdv[[i]])
+      cmpargs$y <- idn[j]
+      di   <- if (is.null(cmpfunc)) do.call('adist', cmpargs) else do.call(cmpfunc, cmpargs)
+      d[i] <- min(di, na.rm=TRUE)
       if (d[i]<dmax) {
         matches[[i]] <- which(if(dups) (di<dmax) else (di==d[i]))
         attr(matches[[i]], 'leven') <- di[matches[[i]]]
