@@ -4,16 +4,19 @@
 \alias{findPanel}
 \title{findPanel}
 \usage{
-findPanel(data, matches)
+findPanel(data, matches, possible = TRUE)
 }
 \arguments{
 \item{data}{list of data frames}
 
 \item{matches}{a double list of matches with elements \code{t1}, \code{t2}, ...}
+
+\item{possible}{logical: in case of unclear matches should all possible matches be created (default: \code{TRUE})}
 }
 \value{
 matches
 }
 \description{
-findPanel
+Based on matches between two files (see \code{\link{findMatch}}) the functions create submatches over \code{n} files.
+For a detailed application see the vignette.
 }

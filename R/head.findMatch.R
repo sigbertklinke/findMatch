@@ -18,7 +18,7 @@
 #' match <- findDuplicates(x1, 'code')
 #' head(match)
 head.findMatch <- function(x, n=6L, ...) {
-  x$leven <- cbind(x$leven, rowSums(x$leven))
+  if (!is.null(x$leven)) x$leven <- cbind(x$leven, rowSums(x$leven))
   head(as.data.frame(x), n=n)
 }
 
@@ -26,6 +26,6 @@ head.findMatch <- function(x, n=6L, ...) {
 #' @export
 #' @importFrom utils tail
 tail.findMatch <- function(x, n=6L, ...) {
-  x$leven <- cbind(x$leven, rowSums(x$leven))
+  if (!is.null(x$leven)) x$leven <- cbind(x$leven, rowSums(x$leven))
   tail(as.data.frame(x), n=n)
 }

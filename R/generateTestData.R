@@ -1,8 +1,8 @@
 #' generateTestData
 #'
-#' Generates randomly a test data set of size \code{n}.
+#' Generates randomly test data set(s) of size \code{n}. For a detailed application see the vignette.
 #'
-#' @details The generated data set contains at least eight variables:
+#' @details The generated data set(s) contains at least eight variables:
 #' \describe{
 #' \item{\code{sex}}{sex of respondent (\code{M} male, \code{F} female)}
 #' \item{\code{firstname}}{first name of respondent}
@@ -12,6 +12,7 @@
 #' \item{\code{birthplace}}{birthplace of respondent}
 #' \item{\code{birthday}}{birthday of respondent}
 #' \item{\code{code}}{code generated from respondents data: 2nd and 3rd letter of mothers first name, day of birth, 3rd and 4th letter of birth city and 1st letter of first name}
+#' \item{\code{t}}{character at which time points the observations is included} 
 #' }
 #'
 #' The basic data files for the generation can be found in the \code{extdata} directory of the package
@@ -23,9 +24,11 @@
 #' \item{\code{staedte.txt}}{taken from \href{https://de.wikipedia.org/wiki/Liste_der_St\%C3\%A4dte_in_Deutschland}{Wikipedia list of cities and towns in Germany}}
 #' }
 #'
+#' The further named parameters are either functions of the form \code{FUN(n)} which generates \code{n} values or 
+#' a vector of values from which is sampled by \code{sample(v, size=n, replace=TRUE)}. 
+#' You may overwrite the internal functions (\code{sex}, ...) to generate your own values.  
+#'
 #' @param n number of observations for the test data (default: 500)
-#' @param x data set to take observations from for simulating longitudinal data
-#' @param mortality mortality rate (default: 0.5)
 #' @param ... further \strong{named} (artificial) variables to add to the data set
 #'
 #' @return a data frame
@@ -33,80 +36,119 @@
 #' @export
 #'
 #' @examples
-#' # create two data sets where the second consists of 50% observations of the first
-#' n1 <- 500
-#' n2 <- 300
-#' x1 <- generateTestData(n1)
-#' x2 <- generateTestData(n2, x1)
-#' x1$points <- findInterval(rnorm(n1, mean=10, sd=3), 0:15)-1
-#' head(x1)
-#' x2$points <- findInterval(rnorm(n2, mean=10, sd=3), 0:15)-1
-#' head(x2)
-generateTestData <- function(n=500, x=NULL, mortality=0.5, ...) {
+#' # create a single data set
+#' d <- generateTestData(25)
+#' str(d)
+#' # create a single data set with an additional 'points' variable
+#' d <- generateTestData(25, points=function(n) { sample(20, size=n, replace=TRUE)} )
+#' str(d)
+#' # generate panel data with two time points:
+#' # 20 obs only in t1, 
+#' # 10 in t1 and t2 and 
+#' # 15 only in t2
+#' n <- list(c(20, 1), c(10, 1, 2), c(15, 2))
+#' d <- generateTestData(n)
+#' str(d)
+#' # generate panel data with three time points:
+#' # 6 obs only in t1, 
+#' # 5 in t1 and t2, 
+#' # 8 in t1 and t3, 
+#' # 7 in t1, t2 and t3
+#' # 4 only in t2
+#' # 3 in t2 and t3
+#' # 2 only in t3
+#' n <- list(c(6, 1), c(5, 1, 2), c(8, 1, 3), c(7, 1, 2, 3), c(4, 2), c(3, 2, 3), c(2, 3))
+#' d <- generateTestData(n)
+#' str(d)
+generateTestData <- function(n=500, ...) {
   trim <- function (x) gsub("^\\s+|\\s+$", "", x)
+  userfun <- function (f, n) {
+    if (is.function(f)) return(f(n))
+    f[sample(1:length(f), size=n, replace=TRUE)]
+  }
   #
-  args <- list(...)
-  if (is.null(args$sex)) {
-    args$sex <- sample(factor(c('M', 'F')), size=n, replace=TRUE)
-  } else {
-     if (is.function(args$sex)) args$sex <- args$sex(n)
+  if (!is.list(n)) {
+    n <- as.list(n)
+    for (i in 1:length(n)) n[[i]] <- c(n[[i]], i)
   }
-  if (is.null(args$firstname)) {
-    fnf  <- rio::import(system.file("extdata", "firstname_female.txt", package="findMatch"))
-    fnf  <- stringi::stri_trans_general(fnf[,1], "latin-ascii")
-    fnm  <- rio::import(system.file("extdata", "firstname_male.txt", package="findMatch"))
-    fnm  <- stringi::stri_trans_general(fnm[,1], "latin-ascii")
-    args$firstname <- ifelse(as.numeric(args$sex)==1, sample(fnf, size=n, replace=TRUE),
-                                                       sample(fnm, size=n, replace=TRUE))
-  } else {
-    if (is.function(args$firstname)) args$firstname <- args$firstname(n, args$sex)
+  nd <- 1
+  for (i in 1:length(n)) nd <- max(nd, n[[i]][-1])  
+  data  <- vector('list', nd) 
+  args  <- list(...)
+  nargs <- setdiff(names(args), c("sex", "firstname", "lastname", "mothername", "email", "birthplace", "birthday", "code"))
+  for (i in 1:length(n)) {
+    if (length(n[[i]])>1) {
+      nij <- n[[i]][1]
+      if (nij<1) stop('Negative number of observations are impossible')
+      dl <- list()
+      if (is.null(args$sex)) {
+        dl$sex <- sample(factor(c('M', 'F')), size=nij, replace=TRUE)
+      } else {
+        dl$sex <- userfun(args$sex, nij)
+      }
+      if (is.null(args$firstname)) {
+        fnf  <- rio::import(system.file("extdata", "firstname_female.txt", package="findMatch"))
+        fnf  <- stringi::stri_trans_general(fnf[,1], "latin-ascii")
+        fnm  <- rio::import(system.file("extdata", "firstname_male.txt", package="findMatch"))
+        fnm  <- stringi::stri_trans_general(fnm[,1], "latin-ascii")
+        dl$firstname <- ifelse(as.numeric(dl$sex)==1, sample(fnf, size=nij, replace=TRUE),
+                               sample(fnm, size=nij, replace=TRUE))
+      } else {
+        dl$firstname <- userfun(args$firstname, nij)
+      }
+      if (is.null(args$mothername)) {
+        fnf  <- rio::import(system.file("extdata", "firstname_female.txt", package="findMatch"))
+        fnf  <- stringi::stri_trans_general(fnf[,1], "latin-ascii")
+        dl$mothername <- sample(fnf, size=nij, replace=TRUE)
+      } else {
+        dl$mothername <- userfun(args$mothername, nij)
+      }
+      if (is.null(args$lastname)) {
+        lns  <- rio::import(system.file("extdata", "lastname.txt", package="findMatch"))
+        lns  <- stringi::stri_trans_general(lns[,1], "latin-ascii")
+        dl$lastname <- sample(lns, size=nij, replace=TRUE)
+      } else {
+        dl$lastname <- userfun(args$lastname, nij)
+      }
+      if (is.null(args$email)) {
+        eml  <- rio::import(system.file("extdata", "email_provider.txt", package="findMatch"))
+        eml  <- stringi::stri_trans_general(eml[,1], "latin-ascii")
+        dl$email <- paste0(dl$firstname, '.', dl$lastname, '@', sample(eml, size=nij, replace=TRUE))
+      } else {
+        dl$email <- userfun(args$email, nij)
+      }
+      if (is.null(args$birthplace)) {
+        city <- trim(readLines(system.file("extdata", "staedte.txt", package="findMatch")))
+        city <- stringi::stri_trans_general(city, "latin-ascii")
+        dl$birthplace <- sample(city, size=nij, replace=TRUE)
+      } else {
+        dl$birthplace <- userfun(args$birthplace, nij)
+      }
+      if (is.null(args$birthday)) {
+        dl$birthday <- sample(seq(as.Date('1995/01/01'), as.Date('2000/01/01'), by="day"), size=nij, replace=TRUE)
+      } else {
+        dl$birthday <- userfun(args$birthday, nij)
+      }
+      if (is.null(args$code)) {
+        dl$code <- paste0(substring(dl$mothername, 2,3),
+                          format(dl$birthday, "%0d"),
+                          substring(dl$birthplace, 3,4),
+                          substring(dl$firstname, 1, 1))
+      } else {
+        if (is.function(args$code)) dl$code <- args$code(nij)
+      }
+      if (length(nargs)) {
+        for (k in 1:length(nargs)) {
+          dl[[nargs[k]]] <- userfun(args[[nargs[k]]], nij) 
+        }
+      }
+
+      ind  <- n[[i]][-1]
+      dl$t <- rep(paste0(ind, collapse="-"), nij)
+      df   <- data.frame(dl, stringsAsFactors = FALSE)
+      for (k in ind) data[[k]] <- rbind(data[[k]], df)  
+    }
   }
-  if (is.null(args$mothername)) {
-    fnf  <- rio::import(system.file("extdata", "firstname_female.txt", package="findMatch"))
-    fnf  <- stringi::stri_trans_general(fnf[,1], "latin-ascii")
-    args$mothername <- sample(fnf, size=n, replace=TRUE)
-  } else {
-    if (is.function(args$mothername)) args$mothername <- args$mothername(n)
-  }
-  if (is.null(args$lastname)) {
-    lns  <- rio::import(system.file("extdata", "lastname.txt", package="findMatch"))
-    lns  <- stringi::stri_trans_general(lns[,1], "latin-ascii")
-    args$lastname <- sample(lns, size=n, replace=TRUE)
-  } else {
-    if (is.function(args$lastname)) args$lastname  <- args$lastname(n)
-  }
-  if (is.null(args$email)) {
-    eml  <- rio::import(system.file("extdata", "email_provider.txt", package="findMatch"))
-    eml  <- stringi::stri_trans_general(eml[,1], "latin-ascii")
-    args$email <- paste0(args$firstname, '.', args$lastname, '@', sample(eml, size=n, replace=TRUE))
-  } else {
-    if (is.function(args$email)) args$email <- args$email(n)
-  }
-  if (is.null(args$birthplace)) {
-    city <- trim(readLines(system.file("extdata", "staedte.txt", package="findMatch")))
-    city <- stringi::stri_trans_general(city, "latin-ascii")
-    args$birthplace <- sample(city, size=n, replace=TRUE)
-  } else {
-    if (is.function(args$birthplace)) args$birthplace <- args$birthplace(n)
-  }
-  if (is.null(args$birthday)) {
-    args$birthday <- sample(seq(as.Date('1995/01/01'), as.Date('2000/01/01'), by="day"), size=n, replace=TRUE)
-  } else {
-    if (is.function(args$birthplace)) args$birthday <- args$birthday(n)
-  }
-  if (is.null(args$code)) {
-    args$code <- paste0(substring(args$mothername, 2,3),
-                        format(args$birthday, "%0d"),
-                        substring(args$birthplace, 3,4),
-                        substring(args$firstname, 1, 1))
-  } else {
-    if (is.function(args$code)) args$code <- args$code(n)
-  }
-  if (!is.null(x)) {
-    index <- sample(1:nrow(x), size=min(nrow(x), (1-mortality)*n))
-    for (arg in names(x)) args[[arg]][seq(index)] <- x[[arg]][index]
-  }
-  data.frame(args, stringsAsFactors = FALSE)
+  if(length(data)==1) return(data[[1]])
+  data
 }
-
-

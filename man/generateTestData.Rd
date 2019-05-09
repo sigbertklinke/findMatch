@@ -4,14 +4,10 @@
 \alias{generateTestData}
 \title{generateTestData}
 \usage{
-generateTestData(n = 500, x = NULL, mortality = 0.5, ...)
+generateTestData(n = 500, ...)
 }
 \arguments{
 \item{n}{number of observations for the test data (default: 500)}
-
-\item{x}{data set to take observations from for simulating longitudinal data}
-
-\item{mortality}{mortality rate (default: 0.5)}
 
 \item{...}{further \strong{named} (artificial) variables to add to the data set}
 }
@@ -19,10 +15,10 @@ generateTestData(n = 500, x = NULL, mortality = 0.5, ...)
 a data frame
 }
 \description{
-Generates randomly a test data set of size \code{n}.
+Generates randomly test data set(s) of size \code{n}. For a detailed application see the vignette.
 }
 \details{
-The generated data set contains at least eight variables:
+The generated data set(s) contains at least eight variables:
 \describe{
 \item{\code{sex}}{sex of respondent (\code{M} male, \code{F} female)}
 \item{\code{firstname}}{first name of respondent}
@@ -32,6 +28,7 @@ The generated data set contains at least eight variables:
 \item{\code{birthplace}}{birthplace of respondent}
 \item{\code{birthday}}{birthday of respondent}
 \item{\code{code}}{code generated from respondents data: 2nd and 3rd letter of mothers first name, day of birth, 3rd and 4th letter of birth city and 1st letter of first name}
+\item{\code{t}}{character at which time points the observations is included} 
 }
 
 The basic data files for the generation can be found in the \code{extdata} directory of the package
@@ -42,15 +39,34 @@ The basic data files for the generation can be found in the \code{extdata} direc
 \item{\code{email_provider.txt}}{taken from \href{https://gist.github.com/tbrianjones/5992856}{T. Brian Jones \code{free_email_provider_domains.txt}}}
 \item{\code{staedte.txt}}{taken from \href{https://de.wikipedia.org/wiki/Liste_der_St\%C3\%A4dte_in_Deutschland}{Wikipedia list of cities and towns in Germany}}
 }
+
+The further named parameters are either functions of the form \code{FUN(n)} which generates \code{n} values or 
+a vector of values from which is sampled by \code{sample(v, size=n, replace=TRUE)}. 
+You may overwrite the internal functions (\code{sex}, ...) to generate your own values.
 }
 \examples{
-# create two data sets where the second consists of 50\% observations of the first
-n1 <- 500
-n2 <- 300
-x1 <- generateTestData(n1)
-x2 <- generateTestData(n2, x1)
-x1$points <- findInterval(rnorm(n1, mean=10, sd=3), 0:15)-1
-head(x1)
-x2$points <- findInterval(rnorm(n2, mean=10, sd=3), 0:15)-1
-head(x2)
+# create a single data set
+d <- generateTestData(25)
+str(d)
+# create a single data set with an additional 'points' variable
+d <- generateTestData(25, points=function(n) { sample(20, size=n, replace=TRUE)} )
+str(d)
+# generate panel data with two time points:
+# 20 obs only in t1, 
+# 10 in t1 and t2 and 
+# 15 only in t2
+n <- list(c(20, 1), c(10, 1, 2), c(15, 2))
+d <- generateTestData(n)
+str(d)
+# generate panel data with three time points:
+# 6 obs only in t1, 
+# 5 in t1 and t2, 
+# 8 in t1 and t3, 
+# 7 in t1, t2 and t3
+# 4 only in t2
+# 3 in t2 and t3
+# 2 only in t3
+n <- list(c(6, 1), c(5, 1, 2), c(8, 1, 3), c(7, 1, 2, 3), c(4, 2), c(3, 2, 3), c(2, 3))
+d <- generateTestData(n)
+str(d)
 }

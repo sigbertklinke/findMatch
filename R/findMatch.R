@@ -1,7 +1,7 @@
 #' findMatch
 #'
 #' Finds matches between two or more data sets based on a text variable (code or e-mail) based on
-#' \href{https://en.wikipedia.org/wiki/Levenshtein_distance}{Levensthein distances}.
+#' \href{https://en.wikipedia.org/wiki/Levenshtein_distance}{Levensthein distances}. For a detailed application see the vignette.
 #'
 #' The result consists of a list with three elements
 #' \describe{
