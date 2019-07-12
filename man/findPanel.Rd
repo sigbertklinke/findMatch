@@ -20,3 +20,29 @@ matches
 Based on matches between two files (see \code{\link{findMatch}}) the functions create submatches over \code{n} files.
 For a detailed application see the vignette.
 }
+\examples{
+# generate panel data with three time points:
+# 6 obs only in t1, 
+# 5 in t1 and t2, 
+# 8 in t1 and t3, 
+# 7 in t1, t2 and t3
+# 4 only in t2
+# 3 in t2 and t3
+# 2 only in t3
+n <- list(c(6, 1), c(5, 1, 2), c(8, 1, 3), c(7, 1, 2, 3), c(4, 2), c(3, 2, 3), c(2, 3))
+x <- generateTestData(n)
+# find double matches
+m12 <- findMatch(x[1:2], 'code') 
+summary(m12)
+m23 <- findMatch(x[2:3], 'code') 
+summary(m23)
+m13 <- findMatch(x[c(1,3)], 'code') 
+summary(m13)
+matches <- list()
+matches[['t1']][['t2']] <- m12
+matches[['t1']][['t3']] <- m13
+matches[['t2']][['t3']] <- m23
+m123 <- findPanel(x, matches)
+summary(m123)
+head(m123)
+}

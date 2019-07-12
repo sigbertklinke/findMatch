@@ -23,8 +23,12 @@ a vector with the unique values
 Creates a variable with the unique values from all entries in \code{vars}.
 }
 \examples{
-x1 <- generateTestData()
-x2 <- generateTestData(x=x1)
-ucode <- createID(list(x1, x2), vars=c('code', 'code'), ignore.case=TRUE)
+set.seed(0)
+# create two data sets which consists of
+# 200 obs. only in t1, 200 obs. in t1 and t2 and
+# 100 obs. only in t2
+n <- list(c(200, 1), c(200, 1, 2), c(100, 2))
+x <- generateTestData(n)
+ucode <- createID(x, vars=c('code', 'code'), ignore.case=TRUE)
 head(ucode)
 }

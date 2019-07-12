@@ -11,13 +11,17 @@
 #' @export
 #'
 #' @examples
-#' x1 <- generateTestData()
-#' x2 <- generateTestData(x=x1)
-#' ucode <- createID(list(x1, x2), vars=c('code', 'code'), ignore.case=TRUE)
+#' set.seed(0)
+#' # create two data sets which consists of
+#' # 200 obs. only in t1, 200 obs. in t1 and t2 and
+#' # 100 obs. only in t2
+#' n <- list(c(200, 1), c(200, 1, 2), c(100, 2))
+#' x <- generateTestData(n)
+#' ucode <- createID(x, vars=c('code', 'code'), ignore.case=TRUE)
 #' head(ucode)
 createID <- function(data, vars=NULL, exclude=c('', '.'), ignore.case = FALSE) {
   idn <- c()
-  for (i in seq(length(data))) idn <- c(idn, trim(data[[i]][,vars[i]]))
+  for (i in seq(length(data))) idn <- c(idn, trimws(data[[i]][,vars[i]]))
   if (ignore.case) idn <- toupper(idn)
   idn <- sort(unique(idn))
   idn[!(idn %in% exclude)]

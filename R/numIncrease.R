@@ -13,25 +13,27 @@
 #' @export
 #'
 #' @examples
-#' # create two data sets where the second consists of 50% observations of the first
-#' n1 <- n2 <- 500
-#' x1 <- generateTestData(n1)
-#' x2 <- generateTestData(n2, x1)
+#' set.seed(0)
+#' # create two data sets where the second consists of
+#' # 200 obs. only in t1, 200 obs. in t1 and t2 and
+#' # 100 obs. only in t2
+#' n <- list(c(200, 1), c(200, 1, 2), c(100, 2))
+#' x <- generateTestData(n)
 #' # create ages in years from birthdays
 #' today  <- as.Date(Sys.time())
-#' x1$age <- as.numeric(trunc(difftime(today, x1$birthday, unit="days")/365))
-#' x2$age <- as.numeric(trunc(difftime(today+365, x2$birthday, unit="days")/365))
+#' x[[1]]$age <- as.numeric(trunc(difftime(today, x[[1]]$birthday, unit="days")/365))
+#' x[[2]]$age <- as.numeric(trunc(difftime(today+365, x[[2]]$birthday, unit="days")/365))
 #' #
-#' match <- findMatch(list(x1,x2), c('code', 'code'))
+#' match <- findMatch(x, c('code', 'code'))
 #' summary(match)
-#' match <- numIncrease(match, list(x1,x2), age=c('age', 'age'))
+#' match <- numIncrease(match, x, age=c('age', 'age'))
 #' summary(match)
 #' head(match)
 #' \dontrun{
 #' # with %>% operator
 #' library('magrittr')
-#' match <- findMatch(list(x1,x2), c('code', 'code')) %>%
-#'          numIncrease(list(x1,x2), age=c('age', 'age'), 'age')
+#' match <- findMatch(x, c('code', 'code')) %>%
+#'          numIncrease(x, age=c('age', 'age'))
 #' }
 numIncrease <- function (match, data, min=rep(0, length(data)), max=0:(length(data)-1), ...) {
   if (any(min>max)) stop ("It must hold for all entries: min<=max")
@@ -39,11 +41,12 @@ numIncrease <- function (match, data, min=rep(0, length(data)), max=0:(length(da
   nargs <- names(args)
   res   <- match
   for (i in 1:length(args)) {
-    vname <- args[[i]][1]
+    vars <- if(length(args[[i]])==1) rep(args[[i]], length(data)) else args[[i]] # recycle
+    vname <- vars[1]
     if (!existsVars(vname, data[[1]])) stop(sprintf("variable '%s' does not exist in data sets", vname))  
     dvars <- matrix(data[[1]][match$line[,1],vname], ncol=1)
     for (j in 2:length(data)) {
-      vname <- args[[i]][j]
+      vname <- vars[j]
       if (!existsVars(vname, data[[j]])) stop(sprintf("variable '%s' does not exist in data sets", vname))  
       dvars <- cbind(dvars, data[[j]][match$line[,j], vname])
     }

@@ -61,7 +61,6 @@
 #' d <- generateTestData(n)
 #' str(d)
 generateTestData <- function(n=500, ...) {
-  trim <- function (x) gsub("^\\s+|\\s+$", "", x)
   userfun <- function (f, n) {
     if (is.function(f)) return(f(n))
     f[sample(1:length(f), size=n, replace=TRUE)]
@@ -118,7 +117,7 @@ generateTestData <- function(n=500, ...) {
         dl$email <- userfun(args$email, nij)
       }
       if (is.null(args$birthplace)) {
-        city <- trim(readLines(system.file("extdata", "staedte.txt", package="findMatch")))
+        city <- trimws(readLines(system.file("extdata", "staedte.txt", package="findMatch")))
         city <- stringi::stri_trans_general(city, "latin-ascii")
         dl$birthplace <- sample(city, size=nij, replace=TRUE)
       } else {

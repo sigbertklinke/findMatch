@@ -21,13 +21,14 @@ Exports the found matches into a data file for further manual inspection.
 Sort the matched observations by their respective levensthein distance and delete non-matches from the file.
 }
 \examples{
-#' # create two data sets where the second consists of 50\% observations of the first
-n1 <- n2 <- 500
-x1 <- generateTestData(n1)
-x2 <- generateTestData(n2, x1)
-x1$points <- findInterval(rnorm(n1, mean=10, sd=3), 0:15)-1
-x2$points <- findInterval(rnorm(n2, mean=10, sd=3), 0:15)-1
+set.seed(0)
+library("findMatch")
+# create two data sets where the second consists of
+# 200 obs. only in t1, 200 obs. in t1 and t2 and
+# 100 obs. only in t2
+n <- list(c(200, 1), c(200, 1, 2), c(100, 2))
+x <- generateTestData(n)
 #
-match <- findMatch(list(x1,x2), c('code', 'code'))
+match <- findMatch(x, c('code', 'code'))
 exportMatch(match, 'match.xlsx', overwrite=TRUE)
 }

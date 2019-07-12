@@ -11,6 +11,30 @@
 #' @export
 #'
 #' @examples
+#' # generate panel data with three time points:
+#' # 6 obs only in t1, 
+#' # 5 in t1 and t2, 
+#' # 8 in t1 and t3, 
+#' # 7 in t1, t2 and t3
+#' # 4 only in t2
+#' # 3 in t2 and t3
+#' # 2 only in t3
+#' n <- list(c(6, 1), c(5, 1, 2), c(8, 1, 3), c(7, 1, 2, 3), c(4, 2), c(3, 2, 3), c(2, 3))
+#' x <- generateTestData(n)
+#' # find double matches
+#' m12 <- findMatch(x[1:2], 'code') 
+#' summary(m12)
+#' m23 <- findMatch(x[2:3], 'code') 
+#' summary(m23)
+#' m13 <- findMatch(x[c(1,3)], 'code') 
+#' summary(m13)
+#' matches <- list()
+#' matches[['t1']][['t2']] <- m12
+#' matches[['t1']][['t3']] <- m13
+#' matches[['t2']][['t3']] <- m23
+#' m123 <- findPanel(x, matches)
+#' summary(m123)
+#' head(m123)
 findPanel <- function (data, matches, possible=TRUE) {
   nd    <- length(data)
   panel <- matrix(NA, nrow=0, ncol=nd)
@@ -22,8 +46,22 @@ findPanel <- function (data, matches, possible=TRUE) {
       tj <- sprintf("t%.0f", j)
       matchfiles <- matches[[ti]][[tj]]
       if (length(matchfiles)) {    
-        for (k in 1:length(matchfiles)) {
-          filek      <- import(matchfiles[k])
+        klen <- 1:length(matchfiles)
+        if ('findMatch' %in% class(matchfiles)) klen <- 1
+        for (k in klen) {
+          browser()
+          if (is.character(matchfiles)) {
+            filek <- import(matchfiles[k])
+          } else {
+            if ('findMatch' %in% class(matchfiles)) {
+              filek <- matchfiles
+            } else {
+              filek <- matchfiles[[k]]
+            }
+            
+            filek$leven <- cbind(filek$leven, rowSums(filek$leven))
+            filek <- as.data.frame(filek)
+          }
           paneli     <- matrix(NA, nrow=nrow(filek), ncol=nd)
           paneli[,i] <- filek[,1]
           paneli[,j] <- filek[,2]

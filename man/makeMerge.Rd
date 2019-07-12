@@ -24,16 +24,18 @@ a data frame with merged data
 Creates a a data set consisting of all variables according to the matching results
 }
 \examples{
-# create two data sets where the second consists of 50\% observations of the first
-n1 <- n2 <- 500
-x1 <- generateTestData(n1)
-x2 <- generateTestData(n2, x1)
+set.seed(0)
+# create two data sets where the second consists of
+# 200 obs. only in t1, 200 obs. in t1 and t2 and
+# 100 obs. only in t2
+n <- list(c(200, 1), c(200, 1, 2), c(100, 2))
+x <- generateTestData(n)
 #
-match <- findMatch(list(x1,x2), c('code', 'code'))
+match <- findMatch(x, c('code', 'code'))
 head(match)
 \dontrun{
 exportMatch(match, 'match.xlsx')
 # creates an error since we have duplicate matches
-data <- makeMerge(list(x1, x2), 'match.xlsx')
+data <- makeMerge(x, 'match.xlsx')
 }
 }

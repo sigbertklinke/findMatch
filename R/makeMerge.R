@@ -12,20 +12,22 @@
 #' @export
 #'
 #' @examples
-#' # create two data sets where the second consists of 50% observations of the first
-#' n1 <- n2 <- 500
-#' x1 <- generateTestData(n1)
-#' x2 <- generateTestData(n2, x1)
+#' set.seed(0)
+#' # create two data sets where the second consists of
+#' # 200 obs. only in t1, 200 obs. in t1 and t2 and
+#' # 100 obs. only in t2
+#' n <- list(c(200, 1), c(200, 1, 2), c(100, 2))
+#' x <- generateTestData(n)
 #' #
-#' match <- findMatch(list(x1,x2), c('code', 'code'))
+#' match <- findMatch(x, c('code', 'code'))
 #' head(match)
 #' \dontrun{
 #' exportMatch(match, 'match.xlsx')
 #' # creates an error since we have duplicate matches
-#' data <- makeMerge(list(x1, x2), 'match.xlsx')
+#' data <- makeMerge(x, 'match.xlsx')
 #' }
 makeMerge <- function(data, files, full=FALSE, duplicates.ok=FALSE, ...) {
-  browser()
+  #browser()
   size <- length(data)
 #  if (is.null(header)) header <- sprintf("_%.0f", 1:size)
   file <- c() 
@@ -47,13 +49,13 @@ makeMerge <- function(data, files, full=FALSE, duplicates.ok=FALSE, ...) {
   if (!duplicates.ok) {
     browser()
     dups  <- rep(FALSE, nrow(line))
-    for (j in 1:size) dups <- dups | duplicated(line[,j]) | duplicated(line[,j], fromLast = TRUE)
+    for (j in 1:size) dups <- dups | duplicated(line[,j], incomparables = NA) | duplicated(line[,j], incomparables = NA, fromLast = TRUE)
     if (any(dups)) {
       line <- line[dups,]
       file <- file[dups]
       order <- c()
       for (j in 1:size) {
-        dupj  <- duplicated(line[,j]) | duplicated(line[,j], fromLast = TRUE)
+        dupj  <- duplicated(line[,j], incomparables = NA) | duplicated(line[,j], incomparables = NA, fromLast = TRUE)
         val   <- sort(unique(line[dupj,j]))
         for (k in val) order <- c(order, which(line[,j]==k))    
       }
@@ -77,6 +79,11 @@ makeMerge <- function(data, files, full=FALSE, duplicates.ok=FALSE, ...) {
   for (i in 2:size) {
     res <- cbind(res, data[[i]][line[,i],])
   }
+  #
+  t <- apply(line, 1, function(v) { t <- as.character(1:length(v)); paste0(t[!is.na(v)], collapse='-') }  )
+  cat(sprintf("%0.f matches\n", nrow(line)))
+  print(table(t))
+  #
   attr(res, "lines") <- line
   res
 }

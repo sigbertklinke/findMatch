@@ -31,14 +31,14 @@ findMatch <- function(data, ...) { UseMethod("findMatch") }
 #' @export
 #'
 #' @examples
-#' # create two data sets where the second consists of 50% observations of the first
-#' n1 <- n2 <- 500
-#' x1 <- generateTestData(n1)
-#' x2 <- generateTestData(n2, x1)
-#' x1$points <- findInterval(rnorm(n1, mean=10, sd=3), 0:15)-1
-#' x2$points <- findInterval(rnorm(n2, mean=10, sd=3), 0:15)-1
-#' #
-#' match <- findMatch(list(x1,x2), c('code', 'code'))
+#' set.seed(0)
+#' # create two data sets where the second consists of
+#' # 200 obs. only in t1, 200 obs. in t1 and t2 and
+#' # 100 obs. only in t2
+#' n <- list(c(200, 1), c(200, 1, 2), c(100, 2))
+#' x <- generateTestData(n)
+#' # match by code
+#' match <- findMatch(x, c('code', 'code'))
 #' head(match)
 #' summary(match)
 findMatch.default <- function (data, vars, dmax=3, exclude=c("", "."), ignore.case=FALSE, unique.id=NULL, output=50, cmpfunc=NULL, ...) {
@@ -48,6 +48,7 @@ findMatch.default <- function (data, vars, dmax=3, exclude=c("", "."), ignore.ca
     data <- list(data, data)
     vars <- c(vars, vars)
   } else {
+    vars <- if(length(vars)==1) rep(vars, length(data)) else vars # recycle
     idn <- createID(data, vars, exclude=exclude, ignore.case=ignore.case)
   }
   res     <- list(line  = matrix(0, ncol=length(data), nrow=0),
@@ -58,7 +59,7 @@ findMatch.default <- function (data, vars, dmax=3, exclude=c("", "."), ignore.ca
   for (i in seq(length(data))) {
     vname <- vars[i]
     if (!existsVars(vname, data[[i]])) stop(sprintf("variable '%s' does not exist in data sets", vname))   
-    zdv[[i]] <- trim(data[[i]][,vname])
+    zdv[[i]] <- trimws(data[[i]][,vname])
   }
   uid <- list()
   if (is.null(unique.id)) {
@@ -67,7 +68,7 @@ findMatch.default <- function (data, vars, dmax=3, exclude=c("", "."), ignore.ca
     for (i in seq(length(data))) {
       vname <- unique.id[i]
       if (!existsVars(vname, data[[i]])) stop(sprintf("variable '%s' does not exist in data sets", vname))
-      uid[[i]] <- trim(data[[i]][,vname])
+      uid[[i]] <- trimws(data[[i]][,vname])
     }
   }
   if (anyDuplicated(unlist(uid))) warning("Unique ID contain duplicates")

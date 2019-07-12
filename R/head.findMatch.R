@@ -12,10 +12,15 @@
 #' @importFrom utils head
 #'
 #' @examples
-#' # create a data set
-#' x1 <- generateTestData(500)
+#' set.seed(0)
+#' # create two data sets where the second consists of
+#' # 200 obs. only in t1, 200 obs. in t1 and t2 and
+#' # 100 obs. only in t2
+#' n <- list(c(200, 1), c(200, 1, 2), c(100, 2))
+#' x <- generateTestData(n)
 #' #
-#' match <- findDuplicates(x1, 'code')
+#' #
+#' match <- findDuplicates(x[[1]], 'code')
 #' head(match)
 head.findMatch <- function(x, n=6L, ...) {
   if (!is.null(x$leven)) x$leven <- cbind(x$leven, rowSums(x$leven))
